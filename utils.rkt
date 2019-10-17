@@ -26,4 +26,9 @@
                   (cons (car l) (filter p (cdr l)))
                   (filter p (cdr l)))]))
 
-
+(define Y
+  (λ (f)
+    (λ (g)
+      (((λ (x) (f (λ (y) ((x x) y))))
+        (λ (x) (f (λ (y) ((x x) y)))))
+       g))))
