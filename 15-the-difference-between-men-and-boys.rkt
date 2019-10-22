@@ -4,11 +4,6 @@
 (require racket/trace)
 (require rackunit)
 
-;
-; # Note
-;
-;
-
 (define x '(chicago pizza))
 
 (set! x 'gone)
