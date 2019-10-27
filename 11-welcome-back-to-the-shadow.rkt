@@ -137,5 +137,7 @@
   (λ (tup)
     (scramble-b tup '())))
 
+#| (trace scramble-b) |#
+
 (check-equal? (scramble '(1 1 1 3 4 2 1 1 9 2))
               '(1 1 1 1 1 4 1 1 1 9))

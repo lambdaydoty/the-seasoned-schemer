@@ -35,3 +35,7 @@
 
 (define one?
   (λ (n) (zero? (sub1 n))))
+
+(define member?
+  (λ (x l)
+    (list? (member x l))))
