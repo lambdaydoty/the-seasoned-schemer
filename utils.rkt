@@ -32,3 +32,6 @@
       (((λ (x) (f (λ (y) ((x x) y))))
         (λ (x) (f (λ (y) ((x x) y)))))
        g))))
+
+(define one?
+  (λ (n) (zero? (sub1 n))))
