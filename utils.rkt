@@ -1,13 +1,16 @@
 #lang racket
+(require (for-syntax racket/match))
 (provide (all-defined-out))
 
-(define (atom? x)
-  (and (not (pair? x))
-       (not (null? x))))
+(define atom?
+  (λ (x)
+    (and (not (pair? x))
+         (not (null? x)))))
 
-(define (s-exp? x)
-  (or (atom? x)
-      (list? x)))
+(define s-exp?
+  (λ (x)
+    (or (atom? x)
+        (list? x))))
 
 (define (listing . l)
   (begin
@@ -39,3 +42,16 @@
 (define member?
   (λ (x l)
     (list? (member x l))))
+
+;
+; http://www.greghendershott.com/fear-of-macros/Transform_.html
+;
+; (try continuation tryer catcher)
+;
+(define-syntax (try stx)
+  (match (syntax->list stx)
+    [`(,_ ,cont ,tryer ,catcher)
+      (datum->syntax stx `(let/cc success
+                            (let/cc ,cont
+                              (success ,tryer))
+                            ,catcher))]))
