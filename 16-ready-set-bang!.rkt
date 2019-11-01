@@ -16,6 +16,8 @@
 (check-equal? (sweet-tooth 'fruit) '(fruit cake))
 (check-equal? last 'angelfood)
 
+; sweet-tooth `last`
+
 (define sweet-toothL
   (λ (food)
     (set! last food)
@@ -31,7 +33,7 @@
 
 (check-equal? (sweet-toothL 'carrot) '(carrot cake))
 
-;;
+; sweet-tooth `remember`
 
 (define ingredients '())
 
@@ -49,7 +51,10 @@
 (check-equal? (sweet-toothR 'cheese) '(cheese cake))
 (check-equal? ingredients '(cheese fruit chocolate))
 
-;;
+(check-equal? (sweet-toothR 'carrot) '(carrot cake))
+(check-equal? ingredients '(carrot cheese fruit chocolate))
+
+;
 
 (define deep
   (λ (m)
@@ -60,9 +65,11 @@
 (check-equal? (deep 7) '(((((((pizza))))))))
 (check-equal? (deep 0) 'pizza)
 
-(define Ns '())
+; deep `rembmer`
 
-(define Rs '())
+(define Ns '()) ; `n`s
+
+(define Rs '()) ; `R`esults
 
 (define deepR
   (λ (n)
@@ -72,14 +79,17 @@
       result)))
 
 (check-equal? (deepR 3) '(((pizza))))
-(check-equal? (deepR 5) '(((((pizza))))))
-(check-equal? (deepR 3) '(((pizza))))
+(check-equal? Ns '(3))
+(check-equal? Rs '((((pizza)))))
 
-;
-; ## The 19th Commandment
-;
-; > Use `(set! ...) to remember valuable things between two distinct
-; > uses of a function
+(check-equal? (deepR 5) '(((((pizza))))))
+(check-equal? Ns '(5 3))
+(check-equal? Rs '((((((pizza))))) (((pizza)))))
+
+(check-equal? (deepR 3) '(((pizza))))
+(check-equal? Ns '(3 5 3))
+(check-equal? Rs '((((pizza))) (((((pizza))))) (((pizza)))))
+
 ;
 
 (define find
@@ -92,9 +102,7 @@
 (check-equal? (find 3 Ns Rs) '(((pizza))))
 (check-equal? (find 5 Ns Rs) '(((((pizza))))))
 
-;
-
-(define (member? x l) (list? (member x l)))
+; deep `memorized`
 
 (define deepM
   (λ (n)
@@ -118,6 +126,8 @@
                    (((pizza)))
                    ))
 
+; mutual recursions of deepM & deep
+
 (set! deepM
   (λ (n)
     (if (member? n Ns)
@@ -137,7 +147,7 @@
 (check-equal? (deepM 9) '(((((((((pizza))))))))))
 (check-equal? Ns '(9 8 7 6 5 3))
 
-; Fix deepM by the 16th Commandment
+; fix deepM by the 16th Commandment
 
 (set! deepM
   (let ([Rs '()]
@@ -172,31 +182,26 @@
               result)
             exists)))))
 
-; Y!
+; length
 
-(define length0
+(define length
   (λ (l)
-    (cond [(null? l) 0]
-          [else (add1 (length0 (cdr l)))])))
+    (match l
+      [`() 0]
+      [`(,x ,_l ...) (add1 (length _l))])))
 
-(define length1
-  (λ (l) 0))
+(check-equal? (length '(1 2 3 4 5 6 7)) 7)
 
-(set! length1
-  (λ (l)
-    (cond [(null? l) 0]
-          [else (add1 (length1 (cdr l)))])))
-
-(define length2
-  (let ([h (λ (l) 0)])
-    (set! h (λ (l)
-              (cond [(null? l) 0]
-                    [else (add1 (h (cdr l)))])))
+(set! length
+  (let ([h #f])
+    (set! h
+      (λ (l)
+        (match l
+          [`() 0]
+          [`(,x ,_l ...) (add1 (h _l))])))
     h))
 
-(check-equal? (length0 '(1 2 3 4 5 6 7)) 7)
-(check-equal? (length1 '(1 2 3 4 5 6 7)) 7)
-(check-equal? (length2 '(1 2 3 4 5 6 7)) 7)
+(check-equal? (length '(1 2 3 4 5 6 7)) 7)
 
 ;
 ; ## The 17th Commandment (final ver.)
@@ -209,36 +214,44 @@
 (define L
   (λ (length)
     (λ (l)
-      (cond [(null? l) 0]
-            [else (add1 (length (cdr l)))]))))
+      (match l
+        [`() 0]
+        [`(,x ,_l ...) (add1 (length _l))]))))
 
-((λ ()
-   (define length
-     (let ([h (λ (l) 0)])
-       (set! h (L (λ (x) (h x))))
-       h))
-   (check-equal? (length '(1 2 3 4 5 6 7)) 7)))
+(set! length
+  (let ([h #f])
+    (set! h
+      (L (λ (x) (h x))))
+    h))
+
+(check-equal? (length '(1 2 3 4 5 6 7)) 7)
+
+; Y! and Y-bang
 
 (define Y!
   (λ (L)
-    (let ([h (λ (l) '())])
-      (set! h (L (λ (x) (h x))))
+    (let ([h #f])
+      (set! h
+        (L (λ (x) (h x))))
       h)))
 
 (define Y-bang
   (λ (f)
-    (letrec ([h (f (λ (x) (h x)))])
+    (letrec
+      ([h (f (λ (x) (h x)))])
       h)))
 
-((λ ()
-   ; define (length l) by Y!
-   (define length (Y! L))
-   (check-equal? (length '(1 2 3 4 5 6 7)) 7)))
+; define length by Y!
 
-((λ ()
-   ; define (length l) by Y-bang
-   (define length (Y-bang L))
-   (check-equal? (length '(1 2 3 4 5 6 7)) 7)))
+(set! length (Y! L))
+(check-equal? (length '(1 2 3 4 5 6 7)) 7)
+
+; define length by Y-bang
+
+(set! length (Y-bang L))
+(check-equal? (length '(1 2 3 4 5 6 7)) 7)
+
+;
 
 (define D
   (λ (depth*)
